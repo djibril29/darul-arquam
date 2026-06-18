@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, ArrowDown, ArrowUp, RotateCcw } from "lucide-react";
 import type { VerseContent } from "@/lib/types/content";
@@ -27,6 +27,13 @@ export function VerseDetailClient({
   const [editingTarget, setEditingTarget] = useState<EditingTarget | null>(null);
   const [draft, setDraft] = useState("");
   const [isPending, startTransition] = useTransition();
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (editingTarget) {
+      editorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [editingTarget]);
 
   const delta = versePersonalValue.total - verse.totalValue;
   const hasAnyWordOverride = versePersonalValue.words.some((w) => w.hasOverride);
@@ -202,7 +209,7 @@ export function VerseDetailClient({
       </div>
 
       {editingTarget ? (
-        <div className="bg-card rounded-xl border-2 border-primary overflow-hidden">
+        <div ref={editorRef} className="bg-card rounded-xl border-2 border-primary overflow-hidden">
           <div className="bg-secondary border-b border-primary px-4 py-3 flex items-center gap-2">
             <span className="text-xs font-semibold font-body">
               {editingTarget.type === "word"

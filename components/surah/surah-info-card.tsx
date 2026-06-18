@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, RotateCcw } from "lucide-react";
 import type { SurahSummary } from "@/lib/types/content";
@@ -20,6 +20,13 @@ export function SurahInfoCard({
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [isPending, startTransition] = useTransition();
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isEditing) {
+      editorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [isEditing]);
 
   // Total par défaut = sans bismillah (cohérent avec les versets affichés
   // sous cette carte). Pour Al-Fatiha, la bismillah est le verset 1 donc
@@ -114,7 +121,7 @@ export function SurahInfoCard({
       </GradientPanel>
 
       {isEditing ? (
-        <div className="bg-card rounded-xl border-2 border-primary overflow-hidden">
+        <div ref={editorRef} className="bg-card rounded-xl border-2 border-primary overflow-hidden">
           <div className="bg-secondary border-b border-primary px-4 py-3">
             <span className="text-xs font-semibold font-body">
               Modifier ta valeur pour cette sourate

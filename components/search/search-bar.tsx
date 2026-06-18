@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Hash } from "lucide-react";
+import { Hash, Search } from "lucide-react";
 
 export function SearchBar({ placeholder = "Rechercher un nombre... ex: 1026" }: { placeholder?: string }) {
   const router = useRouter();
@@ -29,6 +29,14 @@ export function SearchBar({ placeholder = "Rechercher un nombre... ex: 1026" }: 
         placeholder={placeholder}
         className="flex-1 bg-transparent text-sm font-body outline-none placeholder:text-muted-foreground"
       />
+      <button
+        type="submit"
+        disabled={!value.trim()}
+        aria-label="Lancer la recherche"
+        className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-40"
+      >
+        <Search size={15} />
+      </button>
     </form>
   );
 }
