@@ -18,9 +18,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+const TITLE = "Darul Arqam";
+const DESCRIPTION = "Lecture et analyse numérique du Coran par guématrie arabe.";
+
 export const metadata: Metadata = {
-  title: "Darul Arqam",
-  description: "Lecture et analyse numérique du Coran par guématrie arabe.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

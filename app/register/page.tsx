@@ -42,6 +42,14 @@ export default async function RegisterPage({
           </p>
         </div>
 
+        <GoogleSignInButton />
+
+        <div className="flex items-center gap-3">
+          <div className="h-px bg-border flex-1" />
+          <span className="text-xs text-muted-foreground font-body">ou</span>
+          <div className="h-px bg-border flex-1" />
+        </div>
+
         {error ? (
           <p className="bg-destructive/10 text-destructive text-xs font-body rounded-xl px-4 py-3">
             {error}
@@ -126,14 +134,6 @@ export default async function RegisterPage({
             <UserPlus size={16} /> Créer mon compte
           </button>
         </form>
-
-        <div className="flex items-center gap-3">
-          <div className="h-px bg-border flex-1" />
-          <span className="text-xs text-muted-foreground font-body">ou</span>
-          <div className="h-px bg-border flex-1" />
-        </div>
-
-        <GoogleSignInButton />
 
         <p className="text-center text-xs text-muted-foreground font-body">
           Déjà un compte ?{" "}

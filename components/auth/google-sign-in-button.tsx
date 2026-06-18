@@ -1,11 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { Globe } from "lucide-react";
+import { useRef, useState } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { GoogleLogo } from "@/components/auth/google-logo";
 
 export function GoogleSignInButton() {
   const [isPending, setIsPending] = useState(false);
+  const glowRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    gsap.to(glowRef.current, {
+      opacity: 0.45,
+      duration: 1.6,
+      ease: "sine.inOut",
+      repeat: -1,
+      yoyo: true,
+    });
+  });
 
   async function signInWithGoogle() {
     setIsPending(true);
@@ -23,13 +36,21 @@ export function GoogleSignInButton() {
   }
 
   return (
-    <button
-      type="button"
-      disabled={isPending}
-      onClick={signInWithGoogle}
-      className="bg-card border border-border rounded-xl py-3.5 flex items-center justify-center gap-2 text-sm font-medium font-body disabled:opacity-50"
-    >
-      <Globe size={16} /> {isPending ? "Redirection..." : "Continuer avec Google"}
-    </button>
+    <div className="relative">
+      <div
+        ref={glowRef}
+        className="absolute -inset-1 rounded-2xl bg-linear-to-r from-[#4285F4] via-[#34A853] to-[#FBBC05] opacity-20 blur-md"
+        aria-hidden="true"
+      />
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={signInWithGoogle}
+        className="relative w-full bg-white border border-border rounded-xl py-4 flex items-center justify-center gap-3 text-base font-semibold font-body text-foreground shadow-sm disabled:opacity-50"
+      >
+        <GoogleLogo size={20} />
+        {isPending ? "Redirection..." : "Continuer avec Google"}
+      </button>
+    </div>
   );
 }

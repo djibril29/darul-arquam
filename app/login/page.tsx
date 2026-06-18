@@ -42,6 +42,14 @@ export default async function LoginPage({
           </p>
         </div>
 
+        <GoogleSignInButton />
+
+        <div className="flex items-center gap-3">
+          <div className="h-px bg-border flex-1" />
+          <span className="text-xs text-muted-foreground font-body">ou</span>
+          <div className="h-px bg-border flex-1" />
+        </div>
+
         {error ? (
           <p className="bg-destructive/10 text-destructive text-xs font-body rounded-xl px-4 py-3">
             {error}
@@ -99,14 +107,6 @@ export default async function LoginPage({
             <LogIn size={16} /> Se connecter
           </button>
         </form>
-
-        <div className="flex items-center gap-3">
-          <div className="h-px bg-border flex-1" />
-          <span className="text-xs text-muted-foreground font-body">ou</span>
-          <div className="h-px bg-border flex-1" />
-        </div>
-
-        <GoogleSignInButton />
 
         <p className="text-center text-xs text-muted-foreground font-body">
           Pas encore de compte ?{" "}
