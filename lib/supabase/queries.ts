@@ -75,7 +75,12 @@ export async function getSurahNameByNumber(surahNumber: number): Promise<string>
   return surah?.nameLatin ?? `Sourate ${surahNumber}`;
 }
 
-type VerseWordRow = { word_text: string; total_value: number; position: number };
+type VerseWordRow = {
+  word_text: string;
+  total_value: number;
+  position: number;
+  transliteration: string | null;
+};
 type VerseRow = {
   surah_number: number;
   verse_number: number;
@@ -87,10 +92,19 @@ type VerseRow = {
   verse_words: VerseWordRow[];
 };
 
+/** Concatène les translittérations des mots dans l'ordre ; null si aucune n'existe. */
+function joinTransliterations(words: { transliteration: string | null }[]): string | null {
+  const parts = words.map((w) => w.transliteration).filter((t): t is string => Boolean(t));
+  return parts.length > 0 ? parts.join(" ") : null;
+}
+
 function mapVerseRow(row: VerseRow): VerseContent {
-  const words: VerseWord[] = [...row.verse_words]
-    .sort((a, b) => a.position - b.position)
-    .map((w) => ({ word: w.word_text, value: w.total_value }));
+  const sortedWordRows = [...row.verse_words].sort((a, b) => a.position - b.position);
+  const words: VerseWord[] = sortedWordRows.map((w) => ({
+    word: w.word_text,
+    value: w.total_value,
+    transliteration: w.transliteration,
+  }));
 
   return {
     verseKey: row.verse_key,
@@ -98,13 +112,14 @@ function mapVerseRow(row: VerseRow): VerseContent {
     verseNumber: row.verse_number,
     textUthmani: row.text_uthmani,
     frenchTranslation: row.french_translation,
+    transliteration: joinTransliterations(sortedWordRows),
     totalValue: row.total_value,
     isBasmalaVirtual: row.is_basmala_virtual,
     words,
   };
 }
 
-const VERSE_SELECT = "*, verse_words(word_text, total_value, position)";
+const VERSE_SELECT = "*, verse_words(word_text, total_value, position, transliteration)";
 
 export async function getVersesBySurah(surahNumber: number): Promise<VerseContent[]> {
   const supabase = await createSupabaseServerClient();
@@ -131,7 +146,14 @@ export async function getVerseByKey(verseKey: string): Promise<VerseContent | nu
 
 export type SearchResults = {
   verses: (VerseContent & { surahName: string })[];
-  words: { word: string; value: number; verseKey: string; surahNumber: number; surahName: string }[];
+  words: {
+    word: string;
+    value: number;
+    transliteration: string | null;
+    verseKey: string;
+    surahNumber: number;
+    surahName: string;
+  }[];
   surahs: SurahSummary[];
 };
 
@@ -163,13 +185,14 @@ export async function searchByNumber(value: number): Promise<SearchResults> {
 
   const { data: wordRows, error: wordsError } = await supabase
     .from("verse_words")
-    .select("word_text, total_value, verse_key, verses(surah_number, surahs(name_latin))")
+    .select("word_text, total_value, transliteration, verse_key, verses(surah_number, surahs(name_latin))")
     .eq("total_value", value);
   if (wordsError) throw wordsError;
 
   type WordRow = {
     word_text: string;
     total_value: number;
+    transliteration: string | null;
     verse_key: string;
     verses: { surah_number: number; surahs: { name_latin: string } | null } | null;
   };
@@ -179,6 +202,7 @@ export async function searchByNumber(value: number): Promise<SearchResults> {
     return {
       word: typedRow.word_text,
       value: typedRow.total_value,
+      transliteration: typedRow.transliteration,
       verseKey: typedRow.verse_key,
       surahNumber: typedRow.verses?.surah_number ?? 0,
       surahName: typedRow.verses?.surahs?.name_latin ?? `Sourate ${typedRow.verses?.surah_number ?? "?"}`,

@@ -29,7 +29,9 @@ describe("basmala rules (PRD §9)", () => {
     const a = calculateBasmalaValue();
     const b = calculateBasmalaValue();
     expect(a).toBe(b); // same object reference (memoized)
-    expect(a.total).toBe(1026);
+    // 1026 (texte sans diacritiques) + 1 pour l'alef suscrit de "ٱلرَّحْمَـٰنِ",
+    // compté comme une vraie lettre depuis le 2026-06-18 (décision produit).
+    expect(a.total).toBe(1027);
   });
 });
 
@@ -42,6 +44,6 @@ describe("calculateSurahTotal", () => {
   });
 
   it("adds the basmala total on top when includeBasmala is true", () => {
-    expect(calculateSurahTotal([verseA, verseB], true)).toBe(5 + 1026);
+    expect(calculateSurahTotal([verseA, verseB], true)).toBe(5 + 1027);
   });
 });

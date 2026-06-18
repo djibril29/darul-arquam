@@ -1,27 +1,37 @@
 const WASLA_ALEF = "ٱ"; // ٱ
 const REGULAR_ALEF = "ا"; // ا
+const DAGGER_ALEF = "ٰ"; // ٰ, alef suscrit
 
 /**
- * Voyelles arabes, shadda, sukun, alef suscrit (dagger alef) et signes
- * coraniques/tajwid + tatweel, exprimés en \u pour éviter toute ambiguïté
- * de rendu RTL dans le code source. Exclut volontairement les lettres
- * précomposées comme آ/أ/إ qui doivent survivre intactes (آ vaut 2 dans ce
- * système).
+ * Voyelles arabes, shadda, sukun et signes coraniques/tajwid + tatweel.
+ * Exprime en \\uXXXX (pas en caracteres arabes bruts) car une classe de
+ * caracteres regex melangeant lettres RTL et tirets de plage est sujette
+ * au reordonnancement bidirectionnel a l affichage/copie - un piege deja
+ * rencontre sur ce fichier (2026-06-18), verifie ici par un script Node
+ * plutot que par relecture visuelle.
  *
- * ؐ-ؚ : signes coraniques honorifiques
- * ً-ْ : harakat, tanwin, shadda, sukun
- * ٓ-ٟ : marques combinantes arabes (maddah, hamza combinante, etc.)
- * ٰ        : alef suscrit (dagger alef, prosodique, non écrit)
- * ۖ-ۜ : petites marques hautes de récitation coranique
- * ۝-۞ : signes coraniques (fin de verset, rub el hizb)
- * ۟-ۨ : petites marques hautes/marques de récitation
- * ۪-ۭ : petites marques basses de récitation
- * ࣔ-࣡ : marques combinantes arabes étendues
- * ࣣ-ࣿ : signes d'annotation coranique étendus
- * ـ        : tatweel
+ * Exclut volontairement les lettres precomposees comme آ/أ/إ qui doivent
+ * survivre intactes (آ vaut 2 dans ce systeme), et l alef suscrit (U+0670,
+ * voir convertDaggerAlef).
+ *
+ * Le petit waw (U+06E5) et le petit ya (U+06E6) restent volontairement
+ * dans la liste de suppression : dans le corpus MVP, ils n apparaissent
+ * QUE comme marque de silat sur un suffixe pronominal (ـهُۥ/ـهِۦ, ex.
+ * "لَّهُۥ" = lahu), une nuance de recitation qui depend du contexte, pas
+ * une lettre structurelle du mot - a la difference de l alef suscrit qui
+ * marque une voyelle longue toujours presente (ex. "العالمين", "الرحمن").
+ * Decision produit explicite (2026-06-18), apres correction d un premier
+ * essai qui les traitait comme l alef suscrit a tort (لَّهُۥ calcule a 41
+ * au lieu de 35).
+ *
+ * U+0610-U+061A : signes coraniques honorifiques
+ * U+064B-U+065F : harakat, tanwin, shadda, sukun, marques combinantes
+ * U+06D6-U+06ED : petites marques hautes/basses de recitation coranique
+ * U+08D4-U+08E1, U+08E3-U+08FF : marques combinantes et signes annotation etendus
+ * U+0640 : tatweel
  */
 const DIACRITICS_AND_SYMBOLS_REGEX =
-  /[ؐ-ًؚ-ٰٟۖ-ۭࣔ-ࣣ࣡-ࣿـ]/g;
+  /[\u0610-\u061A\u064B-\u065F\u06D6-\u06ED\u08D4-\u08E1\u08E3-\u08FF\u0640]/g;
 
 export function stripDiacriticsAndSymbols(text: string): string {
   return text.replace(DIACRITICS_AND_SYMBOLS_REGEX, "");
@@ -32,10 +42,19 @@ export function convertWaslaAlef(text: string): string {
 }
 
 /**
- * Prépare le texte (text_uthmani_simple) pour le calcul (PRD §7) :
- * supprime voyelles/symboles/tajwid/tatweel, ne double pas la shadda
- * (elle est simplement retirée), conserve آ, convertit ٱ en ا.
+ * Convertit l alef suscrit (voyelle longue structurelle du rasm coranique,
+ * ex. "العالمين", "الرحمن") en alef plein (PRD section 7, decision 2026-06-18).
+ */
+export function convertDaggerAlef(text: string): string {
+  return text.replaceAll(DAGGER_ALEF, REGULAR_ALEF);
+}
+
+/**
+ * Prepare le texte (text_uthmani) pour le calcul (PRD section 7) : supprime
+ * voyelles/symboles/tajwid/tatweel, ne double pas la shadda (elle est
+ * simplement retiree), conserve آ, convertit ٱ en ا, et convertit l alef
+ * suscrit en alef plein.
  */
 export function normalizeArabicText(text: string): string {
-  return convertWaslaAlef(stripDiacriticsAndSymbols(text));
+  return convertDaggerAlef(convertWaslaAlef(stripDiacriticsAndSymbols(text)));
 }

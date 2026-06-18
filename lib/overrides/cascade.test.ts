@@ -10,9 +10,10 @@ function makeVerse(verseKey: string, words: number[]): VerseContent {
     verseNumber: Number(verseKey.split(":")[1]),
     textUthmani: "",
     frenchTranslation: null,
+    transliteration: null,
     totalValue: words.reduce((a, b) => a + b, 0),
     isBasmalaVirtual: false,
-    words: words.map((value) => ({ word: "x", value })),
+    words: words.map((value) => ({ word: "x", value, transliteration: null })),
   };
 }
 

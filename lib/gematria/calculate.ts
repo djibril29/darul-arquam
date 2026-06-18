@@ -1,5 +1,5 @@
 import { LETTER_VALUES } from "./letterValues";
-import { stripDiacriticsAndSymbols, convertWaslaAlef } from "./normalize";
+import { stripDiacriticsAndSymbols, convertWaslaAlef, convertDaggerAlef } from "./normalize";
 import { splitVerseIntoWords, splitWordIntoLetters } from "./split";
 import type {
   LetterCalculation,
@@ -15,7 +15,7 @@ export function calculateWordValue(word: string): WordCalculation {
   const strippedWord = stripDiacriticsAndSymbols(word);
   const letters: LetterCalculation[] = splitWordIntoLetters(strippedWord).map(
     (letter) => {
-      const normalizedLetter = convertWaslaAlef(letter);
+      const normalizedLetter = convertDaggerAlef(convertWaslaAlef(letter));
       return {
         letter,
         normalizedLetter,

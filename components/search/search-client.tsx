@@ -138,6 +138,14 @@ export function SearchClient({
                 >
                   {v.textUthmani}
                 </p>
+                {v.transliteration ? (
+                  <p className="text-xs text-muted-foreground/80 font-body mt-1">{v.transliteration}</p>
+                ) : null}
+                {v.frenchTranslation ? (
+                  <p className="text-xs text-muted-foreground font-body italic mt-1">
+                    {v.frenchTranslation}
+                  </p>
+                ) : null}
               </div>
             ))}
             {results.verses.length === 0 ? <EmptyState label="Aucun verset pour ce nombre." /> : null}
@@ -162,6 +170,9 @@ export function SearchClient({
                   >
                     {w.word}
                   </p>
+                  {w.transliteration ? (
+                    <p className="text-xs text-muted-foreground/80 font-body">{w.transliteration}</p>
+                  ) : null}
                 </div>
                 <span className="text-sm font-bold text-primary font-body">{w.value}</span>
               </div>

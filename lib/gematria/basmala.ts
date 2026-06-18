@@ -29,10 +29,16 @@ export function hasRealBasmalaAsFirstVerse(surahNumber: number): boolean {
 
 let cachedBasmalaCalculation: VerseCalculation | null = null;
 
-/** Calcul de la basmala, mémoïsé (texte fixe, résultat toujours identique). */
+/**
+ * Calcul de la basmala, mémoïsé (texte fixe, résultat toujours identique).
+ * Calculé à partir de BASMALA_TEXT_UTHMANI (et non BASMALA_TEXT_SIMPLE) pour
+ * rester cohérent avec le verset 1:1 réel d'Al-Fatiha, qui est désormais
+ * calculé depuis text_uthmani (PRD §7, décision 2026-06-18) — les deux
+ * doivent donner exactement le même total.
+ */
 export function calculateBasmalaValue(): VerseCalculation {
   if (!cachedBasmalaCalculation) {
-    cachedBasmalaCalculation = calculateVerseValue(BASMALA_TEXT_SIMPLE);
+    cachedBasmalaCalculation = calculateVerseValue(BASMALA_TEXT_UTHMANI);
   }
   return cachedBasmalaCalculation;
 }

@@ -20,9 +20,19 @@ describe("normalizeArabicText", () => {
     expect(normalizeArabicText(withTatweel)).toBe("الله");
   });
 
-  it("removes the dagger alef (superscript alef, U+0670)", () => {
+  it("converts the dagger alef (superscript alef, U+0670) to a regular alef", () => {
     const withDaggerAlef = "ر" + "ٰ" + "ح";
-    expect(normalizeArabicText(withDaggerAlef)).toBe("رح");
+    expect(normalizeArabicText(withDaggerAlef)).toBe("راح");
+  });
+
+  it("removes the small waw (U+06E5) — silat mark on a pronoun suffix, not a structural letter", () => {
+    const withSmallWaw = "د" + "ۥ" + "د";
+    expect(normalizeArabicText(withSmallWaw)).toBe("دد");
+  });
+
+  it("removes the small yeh (U+06E6) — same silat-mark reasoning as the small waw", () => {
+    const withSmallYeh = "ب" + "ۦ" + "س";
+    expect(normalizeArabicText(withSmallYeh)).toBe("بس");
   });
 
   it("converts ٱ (wasla) to ا", () => {

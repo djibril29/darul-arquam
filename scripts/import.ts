@@ -2,7 +2,7 @@ process.loadEnvFile(".env.local");
 
 import { fileURLToPath } from "node:url";
 import { Language } from "@quranjs/api";
-import { fetchChapterMeta, fetchSurahVerses } from "../lib/quran-api/verses";
+import { fetchChapterMeta, fetchSurahVerses, extractWordTransliterations } from "../lib/quran-api/verses";
 import { getSupabaseAdminClient } from "../lib/supabase/admin";
 import {
   calculateVerseValue,
@@ -26,6 +26,9 @@ type ImportableVerse = {
   textUthmaniSimple: string;
   frenchTranslation: string | null;
   isBasmalaVirtual: boolean;
+  /** Translittération anglaise par mot (PRD §7, affichage uniquement). Vide
+   * pour la basmala virtuelle (non affichée, voir getVersesBySurah). */
+  wordTransliterations: string[];
 };
 
 async function upsertSurahMetadata(surahNumber: number): Promise<{ id: string }> {
@@ -73,6 +76,7 @@ function buildImportableVerses(
       textUthmaniSimple: BASMALA_TEXT_SIMPLE,
       frenchTranslation: null,
       isBasmalaVirtual: true,
+      wordTransliterations: [],
     });
   }
 
@@ -84,6 +88,7 @@ function buildImportableVerses(
       textUthmaniSimple: verse.textUthmaniSimple ?? "",
       frenchTranslation: verse.translations?.[0]?.text ?? null,
       isBasmalaVirtual: false,
+      wordTransliterations: extractWordTransliterations(verse),
     });
   }
 
@@ -137,22 +142,34 @@ async function upsertLetters(wordId: string, verseKey: string, wordPosition: num
   if (error) throw error;
 }
 
-async function upsertWords(verseId: string, verseKey: string, calculation: VerseCalculation) {
+/**
+ * `wordTransliterations` est optionnel : quand absent (recalculateValues,
+ * qui ne rappelle jamais l'API — règle d'or n°8), la colonne `transliteration`
+ * est omise de l'upsert pour ne pas écraser la valeur déjà stockée à l'import.
+ */
+async function upsertWords(
+  verseId: string,
+  verseKey: string,
+  calculation: VerseCalculation,
+  wordTransliterations?: string[]
+) {
   const supabase = getSupabaseAdminClient();
   for (const [position, word] of calculation.words.entries()) {
+    const payload: Record<string, unknown> = {
+      verse_id: verseId,
+      verse_key: verseKey,
+      position,
+      word_text: word.word,
+      normalized_word: word.normalizedWord,
+      total_value: word.total,
+    };
+    if (wordTransliterations) {
+      payload.transliteration = wordTransliterations[position] || null;
+    }
+
     const { data, error } = await supabase
       .from("verse_words")
-      .upsert(
-        {
-          verse_id: verseId,
-          verse_key: verseKey,
-          position,
-          word_text: word.word,
-          normalized_word: word.normalizedWord,
-          total_value: word.total,
-        },
-        { onConflict: "verse_id,position" }
-      )
+      .upsert(payload, { onConflict: "verse_id,position" })
       .select("id")
       .single();
     if (error) throw error;
@@ -212,7 +229,7 @@ export async function importSurah(surahNumber: number): Promise<void> {
   const realVerseCalculations: VerseCalculation[] = [];
 
   for (const verse of importableVerses) {
-    const calculation = calculateVerseValue(verse.textUthmaniSimple);
+    const calculation = calculateVerseValue(verse.textUthmani);
     if (calculation.unknownCharacters.length > 0) {
       console.warn(
         `  ⚠ ${verse.verseKey} : caractères inconnus = ${calculation.unknownCharacters.join(", ")}`
@@ -220,7 +237,7 @@ export async function importSurah(surahNumber: number): Promise<void> {
     }
 
     const { id: verseId } = await upsertVerse(surahId, surahNumber, verse, calculation);
-    await upsertWords(verseId, verse.verseKey, calculation);
+    await upsertWords(verseId, verse.verseKey, calculation, verse.wordTransliterations);
 
     if (!verse.isBasmalaVirtual) {
       realVerseCalculations.push(calculation);
@@ -258,7 +275,7 @@ export async function recalculateValues(): Promise<void> {
 
     const { data: verses, error: versesError } = await supabase
       .from("verses")
-      .select("id, verse_key, verse_number, text_uthmani_simple, is_basmala_virtual")
+      .select("id, verse_key, verse_number, text_uthmani, is_basmala_virtual")
       .eq("surah_id", surah.id)
       .order("verse_number", { ascending: true });
     if (versesError) throw versesError;
@@ -269,10 +286,10 @@ export async function recalculateValues(): Promise<void> {
       id: string;
       verse_key: string;
       verse_number: number;
-      text_uthmani_simple: string;
+      text_uthmani: string;
       is_basmala_virtual: boolean;
     }[]) {
-      const calculation = calculateVerseValue(verse.text_uthmani_simple);
+      const calculation = calculateVerseValue(verse.text_uthmani);
 
       const { error: updateError } = await supabase
         .from("verses")

@@ -32,6 +32,9 @@ export function VerseCard({
       >
         {verse.textUthmani}
       </p>
+      {verse.transliteration ? (
+        <p className="text-xs text-muted-foreground/80 font-body mb-1.5">{verse.transliteration}</p>
+      ) : null}
       {verse.frenchTranslation ? (
         <p className="text-xs text-muted-foreground font-body leading-relaxed mb-3 italic">
           {verse.frenchTranslation}
@@ -42,12 +45,19 @@ export function VerseCard({
           const wordPersonal = personalValue?.words[i];
           return (
             <div key={i} className="flex items-center justify-between">
-              <span
-                className="text-base text-foreground"
-                style={{ fontFamily: "var(--font-arabic)", direction: "rtl" }}
-              >
-                {w.word}
-              </span>
+              <div>
+                <span
+                  className="text-base text-foreground"
+                  style={{ fontFamily: "var(--font-arabic)", direction: "rtl" }}
+                >
+                  {w.word}
+                </span>
+                {w.transliteration ? (
+                  <span className="block text-[10px] text-muted-foreground/80 font-body">
+                    {w.transliteration}
+                  </span>
+                ) : null}
+              </div>
               <div className="flex items-center gap-1.5">
                 {wordPersonal?.hasOverride ? (
                   <span className="text-xs text-muted-foreground font-body line-through">

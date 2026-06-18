@@ -91,6 +91,9 @@ export function VerseDetailClient({
         >
           {verse.textUthmani}
         </p>
+        {verse.transliteration ? (
+          <p className="text-xs text-muted-foreground/80 font-body mb-1">{verse.transliteration}</p>
+        ) : null}
         {verse.frenchTranslation ? (
           <p className="text-xs text-muted-foreground font-body italic">{verse.frenchTranslation}</p>
         ) : null}
@@ -166,12 +169,19 @@ export function VerseDetailClient({
                 key={i}
                 className={`flex items-center justify-between px-4 py-3.5 ${personal.hasOverride ? "bg-secondary" : ""}`}
               >
-                <span
-                  className="text-xl text-foreground"
-                  style={{ fontFamily: "var(--font-arabic)", direction: "rtl" }}
-                >
-                  {w.word}
-                </span>
+                <div>
+                  <span
+                    className="text-xl text-foreground"
+                    style={{ fontFamily: "var(--font-arabic)", direction: "rtl" }}
+                  >
+                    {w.word}
+                  </span>
+                  {w.transliteration ? (
+                    <span className="block text-[11px] text-muted-foreground/80 font-body">
+                      {w.transliteration}
+                    </span>
+                  ) : null}
+                </div>
                 <div className="flex items-center gap-2">
                   {personal.hasOverride ? (
                     <span className="text-xs text-muted-foreground font-body line-through">
@@ -217,11 +227,18 @@ export function VerseDetailClient({
                 : "Modifier ta valeur pour ce verset"}
             </span>
             {editingTarget.type === "word" ? (
-              <span
-                className="text-xl text-foreground"
-                style={{ fontFamily: "var(--font-arabic)", direction: "rtl" }}
-              >
-                {verse.words[editingTarget.index].word}
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="text-xl text-foreground"
+                  style={{ fontFamily: "var(--font-arabic)", direction: "rtl" }}
+                >
+                  {verse.words[editingTarget.index].word}
+                </span>
+                {verse.words[editingTarget.index].transliteration ? (
+                  <span className="text-xs text-muted-foreground font-body">
+                    ({verse.words[editingTarget.index].transliteration})
+                  </span>
+                ) : null}
               </span>
             ) : null}
           </div>

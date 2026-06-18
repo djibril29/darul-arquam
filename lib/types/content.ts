@@ -16,6 +16,8 @@ export type SurahSummary = {
 export type VerseWord = {
   word: string;
   value: number;
+  /** Translittération anglaise (affichage uniquement, jamais utilisée pour le calcul). */
+  transliteration: string | null;
 };
 
 export type VerseContent = {
@@ -25,6 +27,8 @@ export type VerseContent = {
   textUthmani: string;
   /** null pour la basmala virtuelle (108-114), qui n'est pas un verset traduit. */
   frenchTranslation: string | null;
+  /** Concaténation des translittérations des mots, dans l'ordre. Null si aucun mot n'en a. */
+  transliteration: string | null;
   totalValue: number;
   isBasmalaVirtual: boolean;
   words: VerseWord[];
