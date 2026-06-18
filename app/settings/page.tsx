@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { BackHeader } from "@/components/layout/back-header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SectionCard } from "@/components/settings/section-card";
 import { SettingRow } from "@/components/settings/setting-row";
 import { LETTER_VALUES } from "@/lib/gematria/letterValues";
+import { logout } from "@/app/actions/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   Pencil,
   Type,
@@ -14,11 +17,23 @@ import {
   Download,
   Trash2,
   Shield,
+  ScrollText,
   LogOut,
 } from "lucide-react";
 
-export default function SettingsPage() {
+function getInitials(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+export default async function SettingsPage() {
   const letters = Object.entries(LETTER_VALUES);
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const fullName = (user?.user_metadata?.full_name as string | undefined) ?? "Utilisateur";
+  const email = user?.email ?? "";
 
   return (
     <div className="bg-background flex flex-col min-h-screen bg-dot-pattern">
@@ -27,13 +42,13 @@ export default function SettingsPage() {
       <div className="flex-1 px-4 pt-5 pb-4 flex flex-col gap-5">
         <div className="bg-card rounded-xl border border-border px-4 py-4 flex items-center gap-3">
           <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-lg font-headings font-bold text-primary">
-            IA
+            {getInitials(fullName)}
           </div>
           <div className="flex-1">
             <p className="text-base font-headings font-semibold text-foreground">
-              Ibrahim Al-Farsi
+              {fullName}
             </p>
-            <p className="text-xs text-muted-foreground font-body">ibrahim@example.com</p>
+            <p className="text-xs text-muted-foreground font-body">{email}</p>
           </div>
           <button
             type="button"
@@ -49,9 +64,9 @@ export default function SettingsPage() {
             Lecture
           </h3>
           <SectionCard>
-            <SettingRow icon={Type} label="Taille du texte arabe" value="Grande" />
-            <SettingRow icon={BookOpen} label="Traduction" value="Français" />
-            <SettingRow icon={Moon} label="Mode sombre" value="Désactivé" />
+            <SettingRow icon={Type} label="Taille du texte arabe" value="Grande" chevron={false} />
+            <SettingRow icon={BookOpen} label="Traduction" value="Français" chevron={false} />
+            <SettingRow icon={Moon} label="Mode sombre" value="Désactivé" chevron={false} />
           </SectionCard>
         </div>
 
@@ -60,7 +75,7 @@ export default function SettingsPage() {
             Système de calcul
           </h3>
           <SectionCard>
-            <SettingRow icon={Calculator} label="Méthode de calcul" value="Guématrie Darul Arqam" />
+            <SettingRow icon={Calculator} label="Méthode de calcul" value="Guématrie Darul Arqam" chevron={false} />
             <SettingRow icon={Info} label="Table des valeurs" chevron={false} />
           </SectionCard>
 
@@ -97,8 +112,8 @@ export default function SettingsPage() {
             Compte
           </h3>
           <SectionCard>
-            <SettingRow icon={Bell} label="Notifications" value="Activées" />
-            <SettingRow icon={Download} label="Exporter mes notes" />
+            <SettingRow icon={Bell} label="Notifications" value="Activées" chevron={false} />
+            <SettingRow icon={Download} label="Exporter mes notes" chevron={false} />
             <SettingRow icon={Trash2} label="Supprimer mon compte" chevron={false} danger />
           </SectionCard>
         </div>
@@ -109,8 +124,15 @@ export default function SettingsPage() {
           </h3>
           <SectionCard>
             <SettingRow icon={Info} label="Version" value="1.0.0" chevron={false} />
-            <SettingRow icon={Shield} label="Politique de confidentialité" />
-            <SettingRow icon={LogOut} label="Se déconnecter" chevron={false} danger />
+            <Link href="/terms">
+              <SettingRow icon={ScrollText} label="Conditions d'utilisation" />
+            </Link>
+            <SettingRow icon={Shield} label="Politique de confidentialité" chevron={false} />
+            <form action={logout}>
+              <button type="submit" className="w-full text-left">
+                <SettingRow icon={LogOut} label="Se déconnecter" chevron={false} danger />
+              </button>
+            </form>
           </SectionCard>
         </div>
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { MoonStar, User, Mail, Lock, UserPlus, Globe } from "lucide-react";
+import { MoonStar, User, Mail, Lock, UserPlus } from "lucide-react";
 import { GradientPanel, DecorativeCircle } from "@/components/shared/gradient-panel";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { register } from "./actions";
 
 export default async function RegisterPage({
@@ -132,12 +133,7 @@ export default async function RegisterPage({
           <div className="h-px bg-border flex-1" />
         </div>
 
-        <button
-          type="button"
-          className="bg-card border border-border rounded-xl py-3.5 flex items-center justify-center gap-2 text-sm font-medium font-body"
-        >
-          <Globe size={16} /> Continuer avec Google
-        </button>
+        <GoogleSignInButton />
 
         <p className="text-center text-xs text-muted-foreground font-body">
           Déjà un compte ?{" "}

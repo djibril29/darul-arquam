@@ -1,5 +1,6 @@
 process.loadEnvFile(".env.local");
 
+import { fileURLToPath } from "node:url";
 import { Language } from "@quranjs/api";
 import { fetchChapterMeta, fetchSurahVerses } from "../lib/quran-api/verses";
 import { getSupabaseAdminClient } from "../lib/supabase/admin";
@@ -315,7 +316,11 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("Erreur d'import :", err);
-  process.exit(1);
-});
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
+  main().catch((err) => {
+    console.error("Erreur d'import :", err);
+    process.exit(1);
+  });
+}

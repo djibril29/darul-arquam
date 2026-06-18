@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Naskh_Arabic, Geist_Mono } from "next/font/google";
+import { ClickFeedback } from "@/components/shared/click-feedback";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,6 +35,7 @@ export default function RootLayout({
       style={{ "--font-headings": "var(--font-body)" } as React.CSSProperties}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <ClickFeedback />
         {children}
       </body>
     </html>

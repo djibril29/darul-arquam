@@ -22,6 +22,8 @@ Darul Arqam est une application web privée de lecture et d'analyse numérique d
 
 - Next.js (App Router) + TypeScript + Tailwind CSS + shadcn/ui, RSC par défaut
 - Supabase : Postgres + Auth + RLS (`@supabase/ssr`)
+  - Connexion email/password (Server Actions) **et** Google OAuth (`signInWithOAuth`, bouton client + route `/app/auth/callback`)
+  - Provider Google à activer côté dashboard Supabase (Authentication → Providers) + Google Cloud Console (OAuth client ID/secret) — config externe, pas dans ce repo
 - Tests : Vitest (critique pour le moteur de guématrie)
 - Données coraniques : **Quran Foundation Content API** via le SDK officiel `@quranjs/api`
   - `@quranjs/api/server` côté serveur (scripts d'import, jamais côté client)

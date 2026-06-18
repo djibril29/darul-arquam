@@ -1,12 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/register"];
+const AUTH_PUBLIC_PATHS = ["/login", "/register", "/auth/callback", "/welcome"];
+const ALWAYS_PUBLIC_PATHS = ["/terms"];
 
 /**
  * Rafraîchit la session Supabase à chaque requête et protège les routes :
- * redirige vers /login si non authentifié, vers / si déjà authentifié sur
- * une page publique (login/register).
+ * redirige vers /welcome si non authentifié (sauf pages toujours publiques
+ * comme /terms), vers / si déjà authentifié sur une page d'auth (login/
+ * register/welcome).
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -32,16 +34,18 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isPublicPath = PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path));
+  const pathname = request.nextUrl.pathname;
+  const isAuthPublic = AUTH_PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+  const isAlwaysPublic = ALWAYS_PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
-  if (!user && !isPublicPath) {
+  if (!user && !isAuthPublic && !isAlwaysPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/welcome";
     url.search = "";
     return NextResponse.redirect(url);
   }
 
-  if (user && isPublicPath) {
+  if (user && isAuthPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";
