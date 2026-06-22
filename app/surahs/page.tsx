@@ -8,7 +8,7 @@ export default async function SurahsPage() {
 
   return (
     <div className="bg-background flex flex-col min-h-screen bg-dot-pattern">
-      <BackHeader href="/" title="Sourates" eyebrow={`${surahs.length} sourates du MVP`} />
+      <BackHeader href="/" title="Sourates" eyebrow={`${surahs.length} sourates`} />
 
       <div className="flex-1 px-4 pt-5 pb-4 flex flex-col gap-2">
         {surahs.map((surah) => (

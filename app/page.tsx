@@ -43,7 +43,7 @@ export default async function DashboardPage() {
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider font-body">
-              Sourates du MVP
+              Sourates
             </h3>
             <Link href="/surahs" className="flex items-center gap-0.5 text-xs text-primary font-body">
               Voir tout <ChevronRight size={12} />

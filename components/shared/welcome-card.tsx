@@ -23,7 +23,7 @@ export function WelcomeCard({
         <div className="flex items-center gap-4">
           <div>
             <p className="text-gold font-headings font-bold text-xl">{surahsCount}</p>
-            <p className="text-primary-foreground/70 text-xs font-body">Sourates MVP</p>
+            <p className="text-primary-foreground/70 text-xs font-body">Sourates</p>
           </div>
           <div>
             <p className="text-gold font-headings font-bold text-xl">{versesCount}</p>

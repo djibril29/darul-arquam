@@ -34,6 +34,20 @@ describe("calculateWordValue", () => {
     expect(result.normalizedWord).toBe("بسم");
     expect(result.total).toBe(2 + 300 + 40); // ب + س + م
   });
+
+  it("collapses ى + dagger alef (ىٰ) into a single ى worth 1, not 2 (e.g. تَوَلَّىٰٓ in 80:1)", () => {
+    const result = calculateWordValue("تَوَلَّىٰٓ");
+    expect(result.normalizedWord).toBe("تولى");
+    expect(result.letters).toHaveLength(4);
+    expect(result.total).toBe(400 + 6 + 30 + 1); // ت + و + ل + ى
+  });
+
+  it("still converts a dagger alef NOT preceded by ى into a full alef (e.g. ٱلْإِنسَـٰنُ)", () => {
+    const result = calculateWordValue("ٱلْإِنسَـٰنُ");
+    // ٱ->ا, puis ل إ ن س + alef issu de l'alef suscrit (tatweel retire) + ن
+    expect(result.normalizedWord).toBe("الإنسان");
+    expect(result.letters).toHaveLength(7);
+  });
 });
 
 describe("calculateVerseValue — Basmala (cas de référence)", () => {

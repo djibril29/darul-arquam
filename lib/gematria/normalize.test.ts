@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeArabicText, convertWaslaAlef } from "./normalize";
+import { normalizeArabicText, convertWaslaAlef, collapseYaDaggerAlef } from "./normalize";
 import { BASMALA_TEXT_SIMPLE } from "./basmala";
 
 describe("normalizeArabicText", () => {
@@ -23,6 +23,34 @@ describe("normalizeArabicText", () => {
   it("converts the dagger alef (superscript alef, U+0670) to a regular alef", () => {
     const withDaggerAlef = "ر" + "ٰ" + "ح";
     expect(normalizeArabicText(withDaggerAlef)).toBe("راح");
+  });
+
+  it("collapses ى + dagger alef (ىٰ) into a single ى worth 1 (surah 80 pattern, e.g. تولّىٰ)", () => {
+    const withYaDaggerAlef = "ل" + "ى" + "ٰ"; // ل + ى + dagger alef
+    const result = normalizeArabicText(withYaDaggerAlef);
+    expect(result).toBe("لى");
+    expect(result.length).toBe(2);
+  });
+
+  it("collapses ى + dagger alef even when followed by a maddah (ىٰٓ, e.g. تولّىٰٓ in 80:1)", () => {
+    const withMaddah = "ل" + "ى" + "ٰ" + "ٓ"; // ل + ى + dagger alef + maddah above
+    expect(normalizeArabicText(withMaddah)).toBe("لى");
+  });
+
+  it("still converts a dagger alef NOT preceded by ى into a full alef (e.g. الرحمـٰن, اِنسـٰن)", () => {
+    const withTatweelDaggerAlef = "س" + "ـ" + "ٰ" + "ن"; // س + tatweel + dagger alef + ن
+    expect(normalizeArabicText(withTatweelDaggerAlef)).toBe("سان");
+  });
+
+  it("still converts a dagger alef after ي (vocative يٰ = يا with an elided alef, e.g. يٰأيها)", () => {
+    const withYehDaggerAlef = "ي" + "ٰ" + "أ"; // ي + dagger alef + أ
+    expect(normalizeArabicText(withYehDaggerAlef)).toBe("ي" + "ا" + "أ");
+  });
+
+  it("collapseYaDaggerAlef only touches ى immediately followed by a dagger alef", () => {
+    expect(collapseYaDaggerAlef("ىٰ")).toBe("ى");
+    expect(collapseYaDaggerAlef("سٰ")).toBe("سٰ");
+    expect(collapseYaDaggerAlef("ى")).toBe("ى");
   });
 
   it("removes the small waw (U+06E5) — silat mark on a pronoun suffix, not a structural letter", () => {

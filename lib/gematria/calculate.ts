@@ -1,5 +1,10 @@
 import { LETTER_VALUES } from "./letterValues";
-import { stripDiacriticsAndSymbols, convertWaslaAlef, convertDaggerAlef } from "./normalize";
+import {
+  stripDiacriticsAndSymbols,
+  convertWaslaAlef,
+  convertDaggerAlef,
+  collapseYaDaggerAlef,
+} from "./normalize";
 import { splitVerseIntoWords, splitWordIntoLetters } from "./split";
 import type {
   LetterCalculation,
@@ -12,7 +17,10 @@ export function getLetterValue(letter: string): number {
 }
 
 export function calculateWordValue(word: string): WordCalculation {
-  const strippedWord = stripDiacriticsAndSymbols(word);
+  // collapseYaDaggerAlef doit s'appliquer sur le mot entier, avant le découpage
+  // en lettres (PRD §7, décision 2026-06-20) : elle dépend de l'adjacence ى+ٰ,
+  // invisible une fois le mot éclaté lettre par lettre.
+  const strippedWord = collapseYaDaggerAlef(stripDiacriticsAndSymbols(word));
   const letters: LetterCalculation[] = splitWordIntoLetters(strippedWord).map(
     (letter) => {
       const normalizedLetter = convertDaggerAlef(convertWaslaAlef(letter));

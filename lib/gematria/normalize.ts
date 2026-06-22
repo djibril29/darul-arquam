@@ -1,6 +1,7 @@
 const WASLA_ALEF = "ٱ"; // ٱ
 const REGULAR_ALEF = "ا"; // ا
 const DAGGER_ALEF = "ٰ"; // ٰ, alef suscrit
+const ALEF_MAKSURA = "ى"; // ى
 
 /**
  * Voyelles arabes, shadda, sukun et signes coraniques/tajwid + tatweel.
@@ -50,11 +51,29 @@ export function convertDaggerAlef(text: string): string {
 }
 
 /**
+ * Retire l alef suscrit lorsqu il suit directement un ى (alef maksura).
+ * Dans ce cas precis ("ىٰ", ex. "تولّىٰ", "استغنىٰ", "الذكرىٰ", tres frequent
+ * dans la sourate 80), l alef suscrit ne fait que renforcer visuellement la
+ * voyelle longue deja portee par le ى (lui-meme value 1) : ce n est pas un
+ * second alef structurel, contrairement au cas ou l alef suscrit suit un
+ * tatweel/une consonne sans aucune lettre de prolongation deja presente
+ * (ex. "الرحمـٰن", "يـٰ" pour la particule vocative "يا" avec alef elide -
+ * ce dernier cas reste converti en alef plein par convertDaggerAlef).
+ * Decision produit explicite (2026-06-20), verifiee empiriquement : sur 290
+ * occurrences d alef suscrit dans le corpus importe, 121 suivent un ى.
+ */
+export function collapseYaDaggerAlef(text: string): string {
+  return text.replaceAll(ALEF_MAKSURA + DAGGER_ALEF, ALEF_MAKSURA);
+}
+
+/**
  * Prepare le texte (text_uthmani) pour le calcul (PRD section 7) : supprime
  * voyelles/symboles/tajwid/tatweel, ne double pas la shadda (elle est
- * simplement retiree), conserve آ, convertit ٱ en ا, et convertit l alef
- * suscrit en alef plein.
+ * simplement retiree), conserve آ, convertit ٱ en ا, retire l alef suscrit
+ * redondant apres un ى, et convertit le reste de l alef suscrit en alef plein.
  */
 export function normalizeArabicText(text: string): string {
-  return convertDaggerAlef(convertWaslaAlef(stripDiacriticsAndSymbols(text)));
+  return convertDaggerAlef(
+    collapseYaDaggerAlef(convertWaslaAlef(stripDiacriticsAndSymbols(text)))
+  );
 }

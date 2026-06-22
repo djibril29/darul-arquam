@@ -20,6 +20,20 @@ describe("basmala rules (PRD §9)", () => {
     }
   });
 
+  it("surahs 80-107 (new batch) also need a virtual basmala", () => {
+    for (let surah = 80; surah <= 107; surah++) {
+      expect(needsVirtualBasmala(surah)).toBe(true);
+      expect(hasRealBasmalaAsFirstVerse(surah)).toBe(false);
+    }
+  });
+
+  it("every surah needs a virtual basmala except 1 and 9 (exclusion-based rule)", () => {
+    for (let surah = 2; surah <= 114; surah++) {
+      if (surah === 9) continue;
+      expect(needsVirtualBasmala(surah)).toBe(true);
+    }
+  });
+
   it("surah 9 (out of MVP) is neither — reserved for a future explicit rule", () => {
     expect(needsVirtualBasmala(9)).toBe(false);
     expect(hasRealBasmalaAsFirstVerse(9)).toBe(false);

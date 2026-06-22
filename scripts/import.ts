@@ -258,6 +258,14 @@ export async function importMvpSurahs(): Promise<void> {
   console.log("\nImport MVP terminé.");
 }
 
+/** Importe une plage continue de sourates (bornes incluses), pour dispatcher un gros lot en plusieurs appels. */
+export async function importSurahRange(start: number, end: number): Promise<void> {
+  for (let surahNumber = start; surahNumber <= end; surahNumber++) {
+    await importSurah(surahNumber);
+  }
+  console.log(`\nImport plage ${start}-${end} terminé.`);
+}
+
 /**
  * Recalcule les valeurs à partir des textes déjà stockés dans Supabase,
  * sans rappeler l'API externe (CLAUDE.md règle d'or n°2). Doit redonner
@@ -328,6 +336,13 @@ async function main() {
       throw new Error("Usage : tsx scripts/import.ts import-surah <numero>");
     }
     await importSurah(surahNumber);
+  } else if (command === "import-range") {
+    const start = Number(process.argv[3]);
+    const end = Number(process.argv[4]);
+    if (!start || !end) {
+      throw new Error("Usage : tsx scripts/import.ts import-range <debut> <fin>");
+    }
+    await importSurahRange(start, end);
   } else {
     throw new Error(`Commande inconnue : ${command}`);
   }
