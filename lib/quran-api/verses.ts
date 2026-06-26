@@ -10,6 +10,8 @@ function toChapterId(surahNumber: number) {
   return id;
 }
 
+const VERSES_PER_PAGE = 50;
+
 /**
  * Récupère les versets d'une sourate avec le texte uthmani (affichage),
  * le texte uthmani simple (calcul) et la traduction française. Le
@@ -18,15 +20,33 @@ function toChapterId(surahNumber: number) {
  * `words: true` est nécessaire pour récupérer la translittération
  * mot-par-mot (uniquement disponible à ce niveau, pas au niveau verset —
  * vérifié empiriquement le 2026-06-18).
+ *
+ * `findByChapter` est paginé côté API (`perPage`) et ne renvoie qu'un
+ * `Verse[]` brut, sans métadonnées de pagination (pas de `totalPages`
+ * exploitable) : on boucle donc page par page jusqu'à une page incomplète,
+ * seule façon fiable de savoir qu'on a tout récupéré. Sans cette boucle,
+ * toute sourate de plus de 50 versets était silencieusement tronquée à 50
+ * (bug constaté le 2026-06-26 sur les sourates 51, 53, 54, 55, 56 — jamais
+ * révélé par les 8 sourates du MVP, toutes ≤ 50 versets).
  */
 export async function fetchSurahVerses(surahNumber: number, frenchTranslationResourceId: number) {
   const client = getQuranClient();
-  return client.verses.findByChapter(toChapterId(surahNumber), {
-    translations: [frenchTranslationResourceId],
-    fields: { textUthmani: true, textUthmaniSimple: true },
-    words: true,
-    perPage: 50,
-  });
+  const chapterId = toChapterId(surahNumber);
+  const allVerses = [];
+
+  for (let page = 1; ; page++) {
+    const pageVerses = await client.verses.findByChapter(chapterId, {
+      translations: [frenchTranslationResourceId],
+      fields: { textUthmani: true, textUthmaniSimple: true },
+      words: true,
+      perPage: VERSES_PER_PAGE,
+      page,
+    });
+    allVerses.push(...pageVerses);
+    if (pageVerses.length < VERSES_PER_PAGE) break;
+  }
+
+  return allVerses;
 }
 
 /**

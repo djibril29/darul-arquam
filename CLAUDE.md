@@ -4,7 +4,7 @@ Ce fichier oriente Claude Code (et tout contributeur) sur les règles non négoc
 
 ## Résumé du produit
 
-Darul Arqam est une application web privée de lecture et d'analyse numérique du Coran, basée sur un système de guématrie arabe **unique et personnalisé** (pas de sélection entre plusieurs systèmes). MVP : 8 sourates (1, 108–114).
+Darul Arqam est une application web privée de lecture et d'analyse numérique du Coran, basée sur un système de guématrie arabe **unique et personnalisé** (pas de sélection entre plusieurs systèmes). MVP initial : 8 sourates (1, 108–114). Périmètre importé réel au 2026-06-26 : **66 sourates (1, 50–114)** — sourates 80–114 importées lors d'une session antérieure (non documentée à l'époque), sourates 50–79 ajoutées le 2026-06-26. Sourates 2–49 et 9 restent non importées.
 
 ## Règles d'or — ne jamais dévier
 
@@ -89,3 +89,5 @@ pnpm recalculate      # recalcule les valeurs depuis les textes déjà stockés,
 Inclus : auth Supabase, liste/page sourates, page verset, texte uthmani + simple + traduction FR, valeurs lettre/mot/verset/sourate, basmala, notes (verset/sourate), page Notes, recherche par nombre, recherches sauvegardées, **override manuel personnel** (mot/verset/sourate).
 
 Exclu : audio, export PDF, tafsir, plusieurs systèmes de calcul, espace communautaire, partage public de notes, admin avancée, import des 114 sourates dès la V1.
+
+**Sourates importées en base (2026-06-26) : 66 — sourate 1, puis 50 à 114 en continu.** Sourates 2–49 non importées (prochain chantier logique pour combler l'écart). Sourate 9 toujours exclue (PRD §9, règle d'or n°6, aucune basmala). Si tu importes de nouvelles sourates, vérifie d'abord l'état réel de la table `surahs` plutôt que de te fier uniquement à cette liste, qui peut devenir obsolète.

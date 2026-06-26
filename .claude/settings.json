@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm exec *)",
+      "Bash(tee /tmp/import-lot1.log)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -n \"⚠\\\\|importée\\\\|terminé\\\\|Erreur\" /tmp/import-lot2.log)",
+      "Read(//private/tmp/**)",
+      "Bash(npx tsc *)",
+      "Bash(pnpm recalculate *)",
+      "Bash(sort -t' ' -k3 -n -u)",
+      "Bash(rm /Users/user/Desktop/APP/Darul-arkham/scripts/_tmp-verify-reproducible.ts *)",
+      "Bash(pnpm test *)",
+      "Bash(ls -la /Users/user/.claude/projects/ 2>&1 | head -20; echo \"---\"; ls -la \"/Users/user/.claude/projects/-Users-user-Desktop-APP-Darul-arkham/\" 2>&1)",
+      "Read(//Users/user/.claude/projects/**)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

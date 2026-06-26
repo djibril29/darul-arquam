@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Naskh_Arabic, Geist_Mono } from "next/font/google";
 import { ClickFeedback } from "@/components/shared/click-feedback";
+import { InstallPrompt } from "@/components/shared/install-prompt";
 import "./globals.css";
 
 const inter = Inter({
@@ -25,10 +26,21 @@ const SITE_URL =
 const TITLE = "Darul Arqam";
 const DESCRIPTION = "Lecture et analyse numérique du Coran par guématrie arabe.";
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0B6B3A",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: TITLE,
   description: DESCRIPTION,
+  applicationName: TITLE,
+  appleWebApp: {
+    title: TITLE,
+    statusBarStyle: "default",
+  },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
@@ -54,6 +66,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ClickFeedback />
+        <InstallPrompt />
         {children}
       </body>
     </html>
