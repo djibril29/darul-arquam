@@ -11,6 +11,12 @@ function toChapterId(surahNumber: number) {
 }
 
 const VERSES_PER_PAGE = 50;
+/** Pause entre deux pages d'une même sourate, pour ne pas marteler l'API sur les longues sourates (ex. sourate 26 = 5 pages). */
+const DELAY_BETWEEN_PAGES_MS = 400;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Récupère les versets d'une sourate avec le texte uthmani (affichage),
@@ -35,6 +41,8 @@ export async function fetchSurahVerses(surahNumber: number, frenchTranslationRes
   const allVerses = [];
 
   for (let page = 1; ; page++) {
+    if (page > 1) await delay(DELAY_BETWEEN_PAGES_MS);
+
     const pageVerses = await client.verses.findByChapter(chapterId, {
       translations: [frenchTranslationResourceId],
       fields: { textUthmani: true, textUthmaniSimple: true },

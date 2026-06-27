@@ -64,7 +64,10 @@ export default function RootLayout({
       className={`${inter.variable} ${notoNaskhArabic.variable} ${geistMono.variable} h-full antialiased`}
       style={{ "--font-headings": "var(--font-body)" } as React.CSSProperties}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body
+        className="min-h-full flex flex-col bg-background text-foreground"
+        suppressHydrationWarning
+      >
         <ClickFeedback />
         <InstallPrompt />
         {children}

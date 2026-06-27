@@ -31,22 +31,44 @@ function mapSurahRow(row: SurahRow, hasContent: boolean): SurahSummary {
   };
 }
 
+const SELECT_PAGE_SIZE = 1000;
+
+/**
+ * Récupère toutes les valeurs d'une colonne sur une table, en paginant
+ * explicitement (`.range()`). Un `.select()` sans pagination est limité à
+ * 1000 lignes par défaut côté PostgREST/Supabase, sans erreur ni avertissement
+ * — silencieusement tronqué. Sur `verses` (~4000 lignes), ça faisait
+ * apparaître 67 sourates sur 96 comme « pas encore importées » alors
+ * qu'elles l'étaient (constaté le 2026-06-27).
+ */
+async function fetchAllRows<T>(
+  query: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let from = 0; ; from += SELECT_PAGE_SIZE) {
+    const { data, error } = await query(from, from + SELECT_PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < SELECT_PAGE_SIZE) break;
+  }
+  return all;
+}
+
 /** Couche d'accès aux données réelle (Phase 6) — mêmes signatures que la
  * couche mockée de la Phase 2 (désormais async, Supabase oblige). */
 export async function getSurahs(): Promise<SurahSummary[]> {
   const supabase = await createSupabaseServerClient();
 
-  const [{ data: surahRows, error: surahsError }, { data: verseRows, error: versesError }] =
-    await Promise.all([
-      supabase.from("surahs").select("*").order("number"),
-      supabase.from("verses").select("surah_id"),
-    ]);
+  const [{ data: surahRows, error: surahsError }, verseRows] = await Promise.all([
+    supabase.from("surahs").select("*").order("number"),
+    fetchAllRows<{ surah_id: string }>((from, to) =>
+      supabase.from("verses").select("surah_id").range(from, to)
+    ),
+  ]);
   if (surahsError) throw surahsError;
-  if (versesError) throw versesError;
 
-  const surahIdsWithContent = new Set(
-    (verseRows ?? []).map((v: { surah_id: string }) => v.surah_id)
-  );
+  const surahIdsWithContent = new Set(verseRows.map((v) => v.surah_id));
 
   return (surahRows ?? []).map((row: SurahRow) => mapSurahRow(row, surahIdsWithContent.has(row.id)));
 }

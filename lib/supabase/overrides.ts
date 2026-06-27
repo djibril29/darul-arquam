@@ -35,10 +35,31 @@ export async function getUserOverrideCount(): Promise<number> {
   return count ?? 0;
 }
 
+type VerseOverrideRow = {
+  manual_value: number;
+  computed_value: number;
+  comment: string | null;
+  verses: { verse_key: string };
+};
+type WordOverrideRow = {
+  manual_value: number;
+  computed_value: number;
+  comment: string | null;
+  verse_words: { position: number; verses: { verse_key: string } };
+};
+
 /**
  * Tous les overrides (mot/verset/sourate) pour une sourate donnée, pour
  * calculer la cascade personnelle. Utilisé par la page sourate ET par la
  * page verset (qui n'a besoin que de sa propre tranche du résultat).
+ *
+ * Filtre via les relations embarquées (`verses.surah_id` / `verse_words.verses.surah_id`)
+ * plutôt que par listes de `verse_id`/`word_id` en `.in(...)` : pour une longue
+ * sourate (ex. sourate 26, 227 versets ≈ 1800+ mots), la liste de `word_id`
+ * dépasse la longueur d'URL acceptée par l'API et renvoie une erreur "Bad
+ * Request" (constaté le 2026-06-27 — jamais révélé par les 8 sourates du MVP,
+ * toutes ≤ 8 versets). Filtrer par un seul `surah_id` évite ce problème par
+ * construction, quelle que soit la taille de la sourate.
  */
 export async function getOverridesForSurah(surahNumber: number): Promise<SurahOverridesData> {
   const supabase = await createSupabaseServerClient();
@@ -50,24 +71,6 @@ export async function getOverridesForSurah(surahNumber: number): Promise<SurahOv
     .single();
   if (surahError) throw surahError;
 
-  const { data: verseRows, error: versesError } = await supabase
-    .from("verses")
-    .select("id, verse_key")
-    .eq("surah_id", surahRow.id)
-    .eq("is_basmala_virtual", false);
-  if (versesError) throw versesError;
-
-  const verseIdToKey = new Map((verseRows ?? []).map((v) => [v.id, v.verse_key]));
-  const verseIds = (verseRows ?? []).map((v) => v.id);
-
-  const { data: wordRows, error: wordsError } = verseIds.length
-    ? await supabase.from("verse_words").select("id, position, verse_id").in("verse_id", verseIds)
-    : { data: [], error: null };
-  if (wordsError) throw wordsError;
-
-  const wordIdToInfo = new Map((wordRows ?? []).map((w) => [w.id, { position: w.position, verseId: w.verse_id }]));
-  const wordIds = (wordRows ?? []).map((w) => w.id);
-
   const [surahOverrideResult, verseOverrideResult, wordOverrideResult] = await Promise.all([
     supabase
       .from("user_value_overrides")
@@ -75,39 +78,31 @@ export async function getOverridesForSurah(surahNumber: number): Promise<SurahOv
       .eq("target_type", "surah")
       .eq("surah_id", surahRow.id)
       .maybeSingle(),
-    verseIds.length
-      ? supabase
-          .from("user_value_overrides")
-          .select("manual_value, computed_value, comment, verse_id")
-          .eq("target_type", "verse")
-          .in("verse_id", verseIds)
-      : Promise.resolve({ data: [], error: null }),
-    wordIds.length
-      ? supabase
-          .from("user_value_overrides")
-          .select("manual_value, computed_value, comment, word_id")
-          .eq("target_type", "word")
-          .in("word_id", wordIds)
-      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("user_value_overrides")
+      .select("manual_value, computed_value, comment, verses!inner(verse_key)")
+      .eq("target_type", "verse")
+      .eq("verses.surah_id", surahRow.id),
+    supabase
+      .from("user_value_overrides")
+      .select("manual_value, computed_value, comment, verse_words!inner(position, verses!inner(verse_key))")
+      .eq("target_type", "word")
+      .eq("verse_words.verses.surah_id", surahRow.id),
   ]);
   if (surahOverrideResult.error) throw surahOverrideResult.error;
   if (verseOverrideResult.error) throw verseOverrideResult.error;
   if (wordOverrideResult.error) throw wordOverrideResult.error;
 
   const verseOverrides: Record<string, OverrideValue> = {};
-  for (const row of verseOverrideResult.data ?? []) {
-    const verseKey = verseIdToKey.get(row.verse_id as string);
-    if (verseKey) verseOverrides[verseKey] = toOverrideValue(row);
+  for (const row of (verseOverrideResult.data ?? []) as unknown as VerseOverrideRow[]) {
+    verseOverrides[row.verses.verse_key] = toOverrideValue(row);
   }
 
   const wordOverrides: Record<string, Record<number, OverrideValue>> = {};
-  for (const row of wordOverrideResult.data ?? []) {
-    const info = wordIdToInfo.get(row.word_id as string);
-    if (!info) continue;
-    const verseKey = verseIdToKey.get(info.verseId);
-    if (!verseKey) continue;
+  for (const row of (wordOverrideResult.data ?? []) as unknown as WordOverrideRow[]) {
+    const verseKey = row.verse_words.verses.verse_key;
     wordOverrides[verseKey] ??= {};
-    wordOverrides[verseKey][info.position] = toOverrideValue(row);
+    wordOverrides[verseKey][row.verse_words.position] = toOverrideValue(row);
   }
 
   return {

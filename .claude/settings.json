@@ -12,7 +12,17 @@
       "Bash(rm /Users/user/Desktop/APP/Darul-arkham/scripts/_tmp-verify-reproducible.ts *)",
       "Bash(pnpm test *)",
       "Bash(ls -la /Users/user/.claude/projects/ 2>&1 | head -20; echo \"---\"; ls -la \"/Users/user/.claude/projects/-Users-user-Desktop-APP-Darul-arkham/\" 2>&1)",
-      "Read(//Users/user/.claude/projects/**)"
+      "Read(//Users/user/.claude/projects/**)",
+      "Bash(tee -a /tmp/import-2049-lot1.log)",
+      "Bash(tee -a /tmp/import-2049-lot2.log)",
+      "Bash(tee -a /tmp/import-2049-lot3.log)",
+      "Bash(tee -a /tmp/import-2049-lot4.log)",
+      "Bash(tee -a /tmp/import-2049-lot5.log)",
+      "Bash(tee -a /tmp/import-2049-lot6.log)",
+      "Bash(tee -a /tmp/import-2049-lot7.log)",
+      "Bash(tee -a /tmp/import-2049-lot8.log)",
+      "Bash(tee -a /tmp/import-2049-lot9.log)",
+      "Bash(tee -a /tmp/import-2049-lot10.log)"
     ],
     "additionalDirectories": [
       "/tmp"

@@ -258,9 +258,17 @@ export async function importMvpSurahs(): Promise<void> {
   console.log("\nImport MVP terminé.");
 }
 
+/** Pause entre deux sourates d'une même plage, pour ne pas marteler l'API Quran Foundation sur de gros lots. */
+const DELAY_BETWEEN_SURAHS_MS = 500;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /** Importe une plage continue de sourates (bornes incluses), pour dispatcher un gros lot en plusieurs appels. */
 export async function importSurahRange(start: number, end: number): Promise<void> {
   for (let surahNumber = start; surahNumber <= end; surahNumber++) {
+    if (surahNumber > start) await delay(DELAY_BETWEEN_SURAHS_MS);
     await importSurah(surahNumber);
   }
   console.log(`\nImport plage ${start}-${end} terminé.`);
