@@ -9,6 +9,7 @@ import {
   calculateSurahTotal,
   needsVirtualBasmala,
   hasRealBasmalaAsFirstVerse,
+  hasNoBasmalaAtAll,
   BASMALA_TEXT_SIMPLE,
   BASMALA_TEXT_UTHMANI,
 } from "../lib/gematria";
@@ -191,7 +192,10 @@ async function updateSurahTotals(
   let withBasmala: number;
   let withoutBasmala: number | null;
 
-  if (hasRealBasmalaAsFirstVerse(surahNumber)) {
+  if (hasRealBasmalaAsFirstVerse(surahNumber) || hasNoBasmalaAtAll(surahNumber)) {
+    // Sourate 1 : basmala déjà incluse comme verset 1. Sourate 9 : pas de
+    // basmala du tout (décision produit 2026-06-27). Dans les deux cas,
+    // aucun ajout de basmala et la distinction avec/sans n'a pas de sens.
     withBasmala = calculateSurahTotal(realVerseCalculations, false);
     withoutBasmala = null;
   } else if (needsVirtualBasmala(surahNumber)) {
@@ -199,7 +203,7 @@ async function updateSurahTotals(
     withoutBasmala = calculateSurahTotal(realVerseCalculations, false);
   } else {
     throw new Error(
-      `Règle de basmala non définie pour la sourate ${surahNumber} (hors MVP, voir CLAUDE.md règle d'or n°6).`
+      `Règle de basmala non définie pour la sourate ${surahNumber} (voir CLAUDE.md règle d'or n°6).`
     );
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   needsVirtualBasmala,
   hasRealBasmalaAsFirstVerse,
+  hasNoBasmalaAtAll,
   calculateBasmalaValue,
   calculateSurahTotal,
 } from "./basmala";
@@ -34,9 +35,16 @@ describe("basmala rules (PRD §9)", () => {
     }
   });
 
-  it("surah 9 (out of MVP) is neither — reserved for a future explicit rule", () => {
+  it("surah 9 (At-Tawbah) has no basmala at all — neither real nor virtual (décision produit 2026-06-27)", () => {
     expect(needsVirtualBasmala(9)).toBe(false);
     expect(hasRealBasmalaAsFirstVerse(9)).toBe(false);
+    expect(hasNoBasmalaAtAll(9)).toBe(true);
+  });
+
+  it("only surah 9 has no basmala at all", () => {
+    for (let surah = 1; surah <= 114; surah++) {
+      expect(hasNoBasmalaAtAll(surah)).toBe(surah === 9);
+    }
   });
 
   it("calculateBasmalaValue is memoized and deterministic", () => {
