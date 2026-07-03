@@ -4,7 +4,7 @@ Ce fichier oriente Claude Code (et tout contributeur) sur les règles non négoc
 
 ## Résumé du produit
 
-Darul Arqam est une application web privée de lecture et d'analyse numérique du Coran, basée sur un système de guématrie arabe **unique et personnalisé** (pas de sélection entre plusieurs systèmes). MVP initial : 8 sourates (1, 108–114). Périmètre importé réel au 2026-06-29 : **111 sourates (1, 5–114)** — sourates 80–114 importées lors d'une session antérieure (non documentée à l'époque), sourates 50–79 ajoutées le 2026-06-26, sourates 20–49 puis 10–19 ajoutées le 2026-06-27, sourates 5–9 ajoutées le 2026-06-29 (sourate 9 incluse — voir règle d'or n°6 pour sa règle de basmala spécifique). Sourates 2–4 restent non importées (prochain chantier logique pour combler l'écart).
+Darul Arqam est une application web privée de lecture et d'analyse numérique du Coran, basée sur un système de guématrie arabe **unique et personnalisé** (pas de sélection entre plusieurs systèmes). MVP initial : 8 sourates (1, 108–114). Périmètre importé réel au 2026-07-03 : **114 sourates (corpus complet)** — sourates 80–114 importées lors d'une session antérieure (non documentée à l'époque), sourates 50–79 ajoutées le 2026-06-26, sourates 20–49 puis 10–19 ajoutées le 2026-06-27, sourates 5–9 ajoutées le 2026-06-29 (sourate 9 incluse — voir règle d'or n°6 pour sa règle de basmala spécifique), sourates 2–4 ajoutées le 2026-07-03 (jalon final : Coran complet en base).
 
 ## Règles d'or — ne jamais dévier
 
@@ -90,4 +90,4 @@ Inclus : auth Supabase, liste/page sourates, page verset, texte uthmani + simple
 
 Exclu : audio, export PDF, tafsir, plusieurs systèmes de calcul, espace communautaire, partage public de notes, admin avancée, import des 114 sourates dès la V1.
 
-**Sourates importées en base (2026-06-29) : 111 — sourate 1, puis 5 à 114 en continu.** Sourates 2–4 non importées (prochain chantier logique pour combler l'écart). Si tu importes de nouvelles sourates, vérifie d'abord l'état réel de la table `surahs` plutôt que de te fier uniquement à cette liste, qui peut devenir obsolète.
+**Sourates importées en base (2026-07-03) : 114/114 — corpus coranien complet.** Si tu ré-importes ou recalcules des sourates, vérifie d'abord l'état réel de la table `surahs` plutôt que de te fier uniquement à cette liste, qui peut devenir obsolète.
