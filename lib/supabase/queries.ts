@@ -99,6 +99,7 @@ export async function getSurahNameByNumber(surahNumber: number): Promise<string>
 
 type VerseWordRow = {
   word_text: string;
+  normalized_word: string;
   total_value: number;
   position: number;
   transliteration: string | null;
@@ -121,7 +122,9 @@ function joinTransliterations(words: { transliteration: string | null }[]): stri
 }
 
 function mapVerseRow(row: VerseRow): VerseContent {
-  const sortedWordRows = [...row.verse_words].sort((a, b) => a.position - b.position);
+  const sortedWordRows = [...row.verse_words]
+    .filter((w) => w.normalized_word !== "")
+    .sort((a, b) => a.position - b.position);
   const words: VerseWord[] = sortedWordRows.map((w) => ({
     word: w.word_text,
     value: w.total_value,
@@ -141,7 +144,7 @@ function mapVerseRow(row: VerseRow): VerseContent {
   };
 }
 
-const VERSE_SELECT = "*, verse_words(word_text, total_value, position, transliteration)";
+const VERSE_SELECT = "*, verse_words(word_text, normalized_word, total_value, position, transliteration)";
 
 export async function getVersesBySurah(surahNumber: number): Promise<VerseContent[]> {
   const supabase = await createSupabaseServerClient();

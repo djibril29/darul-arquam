@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "import:mvp": "tsx scripts/import.ts import-mvp",
-    "recalculate": "tsx scripts/import.ts recalculate"
+    "recalculate": "tsx scripts/import.ts recalculate",
+    "cleanup:annotations": "tsx scripts/cleanupAnnotationWords.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
