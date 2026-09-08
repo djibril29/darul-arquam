@@ -17,6 +17,13 @@ type SurahRow = {
   total_value_without_basmala: number | null;
 };
 
+/** Forme renvoyée par `select("*, verses(count)")` : un agrégat par sourate. */
+type SurahRowWithCount = SurahRow & { verses: { count: number }[] | null };
+
+function verseCountOf(row: SurahRowWithCount): number {
+  return row.verses?.[0]?.count ?? 0;
+}
+
 function mapSurahRow(row: SurahRow, hasContent: boolean): SurahSummary {
   return {
     number: row.number,
@@ -31,65 +38,49 @@ function mapSurahRow(row: SurahRow, hasContent: boolean): SurahSummary {
   };
 }
 
-const SELECT_PAGE_SIZE = 1000;
-
-/**
- * Récupère toutes les valeurs d'une colonne sur une table, en paginant
- * explicitement (`.range()`). Un `.select()` sans pagination est limité à
- * 1000 lignes par défaut côté PostgREST/Supabase, sans erreur ni avertissement
- * — silencieusement tronqué. Sur `verses` (~4000 lignes), ça faisait
- * apparaître 67 sourates sur 96 comme « pas encore importées » alors
- * qu'elles l'étaient (constaté le 2026-06-27).
- */
-async function fetchAllRows<T>(
-  query: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>
-): Promise<T[]> {
-  const all: T[] = [];
-  for (let from = 0; ; from += SELECT_PAGE_SIZE) {
-    const { data, error } = await query(from, from + SELECT_PAGE_SIZE - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    all.push(...data);
-    if (data.length < SELECT_PAGE_SIZE) break;
-  }
-  return all;
-}
-
 /** Couche d'accès aux données réelle (Phase 6) — mêmes signatures que la
  * couche mockée de la Phase 2 (désormais async, Supabase oblige). */
+/**
+ * Liste des sourates, avec l'indicateur « contenu importé ».
+ *
+ * Le compte des versets est demandé à Postgres (`verses(count)`) au lieu de
+ * rapatrier les lignes : la version précédente paginait les ~6 300
+ * `verses.surah_id` en 8 aller-retours pour n'en tirer qu'un booléen — 2 606 ms
+ * mesurés, contre 546 ms ici. Cette fonction est appelée par l'accueil, /surahs,
+ * /notes et /profile : le coût était payé quatre fois.
+ *
+ * Ne jamais revenir à un `.select()` non paginé sur `verses` : PostgREST tronque
+ * silencieusement à 1000 lignes, ce qui avait fait passer 67 sourates pourtant
+ * importées pour « pas encore importées » (2026-06-27). L'agrégat est immunisé,
+ * il ne renvoie qu'une ligne par sourate.
+ */
 export async function getSurahs(): Promise<SurahSummary[]> {
   const supabase = await createSupabaseServerClient();
 
-  const [{ data: surahRows, error: surahsError }, verseRows] = await Promise.all([
-    supabase.from("surahs").select("*").order("number"),
-    fetchAllRows<{ surah_id: string }>((from, to) =>
-      supabase.from("verses").select("surah_id").range(from, to)
-    ),
-  ]);
-  if (surahsError) throw surahsError;
+  const { data: rows, error } = await supabase
+    .from("surahs")
+    .select("*, verses(count)")
+    .order("number");
+  if (error) throw error;
 
-  const surahIdsWithContent = new Set(verseRows.map((v) => v.surah_id));
-
-  return (surahRows ?? []).map((row: SurahRow) => mapSurahRow(row, surahIdsWithContent.has(row.id)));
+  return (rows ?? []).map((row) => {
+    const typed = row as unknown as SurahRowWithCount;
+    return mapSurahRow(typed, verseCountOf(typed) > 0);
+  });
 }
 
 export async function getSurahByNumber(number: number): Promise<SurahSummary | null> {
   const supabase = await createSupabaseServerClient();
   const { data: row, error } = await supabase
     .from("surahs")
-    .select("*")
+    .select("*, verses(count)")
     .eq("number", number)
     .maybeSingle();
   if (error) throw error;
   if (!row) return null;
 
-  const { count, error: countError } = await supabase
-    .from("verses")
-    .select("id", { count: "exact", head: true })
-    .eq("surah_id", row.id);
-  if (countError) throw countError;
-
-  return mapSurahRow(row, (count ?? 0) > 0);
+  const typed = row as unknown as SurahRowWithCount;
+  return mapSurahRow(typed, verseCountOf(typed) > 0);
 }
 
 export async function getSurahNameByNumber(surahNumber: number): Promise<string> {
@@ -99,9 +90,7 @@ export async function getSurahNameByNumber(surahNumber: number): Promise<string>
 
 type VerseWordRow = {
   word_text: string;
-  normalized_word: string;
   total_value: number;
-  position: number;
   transliteration: string | null;
 };
 type VerseRow = {
@@ -122,10 +111,10 @@ function joinTransliterations(words: { transliteration: string | null }[]): stri
 }
 
 function mapVerseRow(row: VerseRow): VerseContent {
-  const sortedWordRows = [...row.verse_words]
-    .filter((w) => w.normalized_word !== "")
-    .sort((a, b) => a.position - b.position);
-  const words: VerseWord[] = sortedWordRows.map((w) => ({
+  // Tri et filtrage sont délégués à Postgres (voir `withOrderedWords`), donc
+  // `verse_words` arrive déjà ordonné par position et sans les tokens vides.
+  const wordRows = row.verse_words ?? [];
+  const words: VerseWord[] = wordRows.map((w) => ({
     word: w.word_text,
     value: w.total_value,
     transliteration: w.transliteration,
@@ -137,34 +126,55 @@ function mapVerseRow(row: VerseRow): VerseContent {
     verseNumber: row.verse_number,
     textUthmani: row.text_uthmani,
     frenchTranslation: row.french_translation,
-    transliteration: joinTransliterations(sortedWordRows),
+    transliteration: joinTransliterations(wordRows),
     totalValue: row.total_value,
     isBasmalaVirtual: row.is_basmala_virtual,
     words,
   };
 }
 
-const VERSE_SELECT = "*, verse_words(word_text, normalized_word, total_value, position, transliteration)";
+const VERSE_SELECT = "*, verse_words(word_text, total_value, transliteration)";
+
+/**
+ * Applique à une requête sur `verses` le tri et le filtrage des mots imbriqués.
+ *
+ * `normalized_word` vide correspond aux signes de lecture coraniques (ۗ ۖ ۚ ۛ)
+ * que l'import séparait comme des mots ; ils ne doivent jamais s'afficher
+ * (fix du 2026-07-03). Filtrer et trier ici plutôt qu'en JavaScript évite de
+ * transférer `normalized_word` et `position`, inutiles à l'affichage.
+ *
+ * Vérifié sur les sourates 1, 2, 9 et 112 : un filtre sur une ressource
+ * imbriquée ne retire que les mots concernés, jamais le verset parent — les
+ * séquences obtenues sont identiques à celles du tri JavaScript précédent.
+ */
+function withOrderedWords<T extends {
+  neq: (column: string, value: string) => T;
+  order: (column: string, options?: { referencedTable?: string }) => T;
+}>(query: T): T {
+  return query
+    .neq("verse_words.normalized_word", "")
+    .order("position", { referencedTable: "verse_words" });
+}
 
 export async function getVersesBySurah(surahNumber: number): Promise<VerseContent[]> {
   const supabase = await createSupabaseServerClient();
-  const { data: rows, error } = await supabase
-    .from("verses")
-    .select(VERSE_SELECT)
-    .eq("surah_number", surahNumber)
-    .eq("is_basmala_virtual", false)
-    .order("verse_number");
+  const { data: rows, error } = await withOrderedWords(
+    supabase
+      .from("verses")
+      .select(VERSE_SELECT)
+      .eq("surah_number", surahNumber)
+      .eq("is_basmala_virtual", false)
+      .order("verse_number")
+  );
   if (error) throw error;
   return (rows ?? []).map((row) => mapVerseRow(row as unknown as VerseRow));
 }
 
 export async function getVerseByKey(verseKey: string): Promise<VerseContent | null> {
   const supabase = await createSupabaseServerClient();
-  const { data: row, error } = await supabase
-    .from("verses")
-    .select(VERSE_SELECT)
-    .eq("verse_key", verseKey)
-    .maybeSingle();
+  const { data: row, error } = await withOrderedWords(
+    supabase.from("verses").select(VERSE_SELECT).eq("verse_key", verseKey)
+  ).maybeSingle();
   if (error) throw error;
   return row ? mapVerseRow(row as unknown as VerseRow) : null;
 }
@@ -187,11 +197,13 @@ export async function searchByNumber(value: number): Promise<SearchResults> {
 
   const [{ data: verseRows, error: versesError }, { data: surahRows, error: surahsError }] =
     await Promise.all([
-      supabase
-        .from("verses")
-        .select(`${VERSE_SELECT}, surahs(name_latin)`)
-        .eq("total_value", value)
-        .eq("is_basmala_virtual", false),
+      withOrderedWords(
+        supabase
+          .from("verses")
+          .select(`${VERSE_SELECT}, surahs(name_latin)`)
+          .eq("total_value", value)
+          .eq("is_basmala_virtual", false)
+      ),
       supabase
         .from("surahs")
         .select("*")
