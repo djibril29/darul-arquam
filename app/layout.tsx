@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Naskh_Arabic, Geist_Mono } from "next/font/google";
 import { ClickFeedback } from "@/components/shared/click-feedback";
 import { InstallPrompt } from "@/components/shared/install-prompt";
+import { getSiteUrl } from "@/lib/env";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,9 +20,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+const SITE_URL = getSiteUrl();
 
 const TITLE = "Darul Arqam";
 const DESCRIPTION = "Lecture et analyse numérique du Coran par guématrie arabe.";

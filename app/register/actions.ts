@@ -1,6 +1,8 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getSiteUrl } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function register(formData: FormData) {
@@ -18,10 +20,19 @@ export async function register(formData: FormData) {
   }
 
   const supabase = await createSupabaseServerClient();
+  // Sans `emailRedirectTo`, Supabase construit le lien de confirmation à partir
+  // du « Site URL » de son dashboard — qui pointait encore sur l'ancien domaine
+  // Vercel après la migration du 2026-09-07, envoyant les nouveaux inscrits sur
+  // un déploiement suspendu. On impose l'origine réelle de la requête.
+  const origin = (await headers()).get("origin") ?? getSiteUrl();
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
   });
 
   if (error) {
